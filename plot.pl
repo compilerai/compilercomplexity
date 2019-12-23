@@ -3,21 +3,37 @@
 use strict;
 use warnings;
 
-$#ARGV >= 1 or die "Usage: plot.pl <gcc|llvm> <commitcount-filename> [<every-nth-commit>]";
+my $num_commits = 100;
+$#ARGV >= 0 or die "Usage: plot.pl <gcc|llvm> [<num-commits, default:$num_commits>]";
 my $compiler = $ARGV[0];
-my $commitcount_filename = $ARGV[1];
-my $every_nth_commit = 1;
-if ($#ARGV >= 2) {
-  $every_nth_commit = int($ARGV[2]);
+if ($#ARGV >= 1) {
+  $num_commits = int($ARGV[1]);
 }
 
-my $need_to_commit = identify_need_to_commit($compiler, $commitcount_filename, $every_nth_commit);
-if ($need_to_commit) {
+my @commits = reverse(split('\n', `git log --pretty=format:"%H"`));
+my $cnum = scalar @commits;
+
+for (my $i = 0; $i < $cnum - 1; $i += $skip) {
+  process_commit($compiler, $commits[$i]);
+}
+process_commit($compiler, $commits[$cnum - 1]);
+
+sub process_commit {
+  my $compiler = shift;
+  my $commit = shift;
+
+  checkout($compiler, $commit);
   my $date = get_commit_date($compiler);
   my $tot = count_total($compiler);
   #print "Number of lines in $compiler: $tot\n";
   print "\t$compiler\t$date\t$tot\n";
-}
+};
+
+sub checkout {
+  my $compiler = shift;
+  my $commit = shift;
+  system("git -C $compiler checkout $commit");
+};
 
 sub count_total {
   my $compiler = shift;
