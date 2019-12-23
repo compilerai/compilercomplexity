@@ -3,15 +3,16 @@
 use strict;
 use warnings;
 
-my $num_commits = 100;
+my $num_commits = 512;
 $#ARGV >= 0 or die "Usage: plot.pl <gcc|llvm> [<num-commits, default:$num_commits>]";
 my $compiler = $ARGV[0];
 if ($#ARGV >= 1) {
   $num_commits = int($ARGV[1]);
 }
 
-my @commits = reverse(split('\n', `git log --pretty=format:"%H"`));
+my @commits = reverse(split('\n', `git -C $compiler log --pretty=format:"%H"`));
 my $cnum = scalar @commits;
+my $skip = $cnum / $num_commits;
 
 for (my $i = 0; $i < $cnum - 1; $i += $skip) {
   process_commit($compiler, $commits[$i]);

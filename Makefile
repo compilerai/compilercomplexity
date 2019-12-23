@@ -4,8 +4,8 @@ LLVM_REPO=https://github.com/llvm-mirror/llvm
 plot::
 	git -C gcc checkout master
 	perl plot.pl gcc
-	git -C clang checkout master
-	perl plot.pl clang
+	git -C llvm checkout master
+	perl plot.pl llvm
 
 clone_repos::
 	rm -rf gcc llvm
