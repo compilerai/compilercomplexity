@@ -6,8 +6,10 @@ use warnings;
 $#ARGV >= 0 or die "Usage: plot.pl <gcc|llvm>";
 my $compiler = $ARGV[0];
 
+my $date = get_commit_date($compiler);
 my $tot = count_total($compiler);
-print "Number of lines in $compiler: $tot\n";
+#print "Number of lines in $compiler: $tot\n";
+print "$compiler\t$date\t$tot\n";
 
 sub count_total {
   my $compiler = shift;
@@ -44,4 +46,11 @@ sub count_total_in_wc_out {
   }
   close($in);
   return $ret;
+};
+
+sub get_commit_date {
+  my $gitrep = shift;
+  my $date = `cd $gitrep && git show -s --format=%ci && cd ..`;
+  chomp($date);
+  return $date;
 };
