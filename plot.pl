@@ -26,6 +26,7 @@ sub count_total {
     system("mv gcc.git gcc/.git");
     my $tot = count_total_in_wc_out("wc.out");
     system("rm -f wc.out");
+    return $tot;
   } else {
     die "unrecognized compiler: $compiler\n";
   }
