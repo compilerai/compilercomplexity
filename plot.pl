@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 my $num_commits = 512;
-$#ARGV >= 0 or die "Usage: plot.pl <gcc|llvm> [<num-commits, default:$num_commits>]";
+$#ARGV >= 0 or die "Usage: plot.pl <gcc|llvm-project> [<num-commits, default:$num_commits>]";
 my $compiler = $ARGV[0];
 if ($#ARGV >= 1) {
   $num_commits = int($ARGV[1]);
@@ -13,37 +13,41 @@ if ($#ARGV >= 1) {
 my @commits = reverse(split('\n', `git -C $compiler log --pretty=format:"%H"`));
 my $cnum = scalar @commits;
 my $skip = $cnum / $num_commits;
+open(my $outdata, ">out.data.tmp");
 
 for (my $i = 0; $i < $cnum - 1; $i += $skip) {
   process_commit($compiler, $commits[$i]);
 }
 process_commit($compiler, $commits[$cnum - 1]);
+close($outdata);
+system("mv out.data.tmp out.$compiler.csv");
 
 sub process_commit {
   my $compiler = shift;
   my $commit = shift;
 
+  print "Checking out $commit\n";
   checkout($compiler, $commit);
   my $date = get_commit_date($compiler);
   my $tot = count_total($compiler);
   #print "Number of lines in $compiler: $tot\n";
-  print "\t$compiler\t$date\t$tot\n";
+  print $outdata "\t$compiler\t$date\t$tot\n";
 };
 
 sub checkout {
   my $compiler = shift;
   my $commit = shift;
-  system("git -C $compiler checkout $commit");
+  system("git -C $compiler checkout -f $commit");
 };
 
 sub count_total {
   my $compiler = shift;
-  if ($compiler eq "llvm") {
-    system("mv llvm/test llvm/docs llvm/examples llvm/unittests llvm/utils llvm/bindings .");
-    system("mv llvm/.git llvm.git");
-    system("find llvm -type f | xargs wc -l | cat > wc.out");
-    system("mv test docs examples unittests utils bindings llvm");
-    system("mv llvm.git llvm/.git");
+  if ($compiler eq "llvm-project") {
+    system("mv llvm-project/llvm/test llvm-project/llvm/docs llvm-project/llvm/examples llvm-project/llvm/unittests llvm-project/llvm/utils llvm-project/llvm/bindings .");
+    system("mv llvm-project/.git llvm-project.git");
+    system("find llvm-project/llvm -type f | xargs wc -l | cat > wc.out");
+    system("mv test docs examples unittests utils bindings llvm-project/llvm");
+    system("mv llvm-project.git llvm-project/.git");
     my $tot = count_total_in_wc_out("wc.out");
     system("rm -f wc.out");
     return $tot;
